@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.6
-''' a script for uploading tar files directly to Diderot. 
+''' a script for uploading tar files directly to Diderot.
 USE AT YOUR OWN RISK (This is completely unofficial and the consequences of bugs are unknown. I
 assume no responsibility for late assignments, corrupted files, or anything that comes as a result
 of this script!
@@ -58,10 +58,10 @@ C15210 = 2
 C15251 = 3
 C15859B = 4
 class Diderot:
-    def __init__(self, 
+    def __init__(self,
                  class_code=None,
                  filename=None,
-                 url='https://www.diderot.one/courses/', 
+                 url='https://www.diderot.one/courses/',
                  login_url='https://www.diderot.one/login/login/?next=/courses/',
                  logout_url='https://www.diderot.one/login/logout/',
                  assignments_url='https://www.diderot.one/code-homeworks/?course_pk={}',
@@ -95,7 +95,11 @@ class Diderot:
                     status = WARNING
             else:
                 status = RED_MINUS
-            cmd = str(input('Diderot ({}) > '.format(status))).lower()
+            try:
+                cmd = str(input('Diderot ({}) > '.format(status))).lower()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                exit()
             self.cmd = cmd
             if cmd == 'q' or cmd == 'quit':
                 self.running = False
@@ -136,7 +140,7 @@ class Diderot:
                 pass
             else:
                 print('Unrecognized command "{}". Try "help"'.format(cmd))
-    
+
     def check_logged_in(self):
         if not self.connected:
             print('Cannot {} if not connected.'.format(self.cmd))
@@ -159,7 +163,7 @@ class Diderot:
                 try:
                     due_date = response.text.split('Due: ')[1].split('</h4>')[0]
                 except:
-                    pass 
+                    pass
                 # this try except is hyper-gross... This function is basically a hack,
                 # don't ever do anything like this for anything that is real or matters!
                 # In all seriousness, though, these lines above are the most likely thing to break,
@@ -168,7 +172,7 @@ class Diderot:
                 hw_number += 1
             else:
                 found_homework = False
-        
+
     def list_assignments(self):
         for i, name in enumerate(self.assignments):
             print('[{}] : {}'.format(i+1, name))
@@ -203,7 +207,7 @@ class Diderot:
                       'csrfmiddlewaretoken': self.csrftoken,
                       'next': '/courses/'}
         assert self.connected, 'Can\'t login if not yet connected to Diderot!'
-        
+
         r = self.client.post(self.post_url, data=login_data)
         if len(r.history) > 0:
             code = r.history[0].status_code
@@ -238,7 +242,7 @@ class Diderot:
                 print('Got HTTP code {} from server on main page'.format(code))
             self.connected = False
             return False
-        
+
         self.csrftoken = self.client.cookies['csrftoken']
         self.connected = True
         return True
@@ -257,7 +261,7 @@ class Diderot:
                 return False
             else:
                 print('Submission continued.')
-            
+
         print('Submitting {} to assignment: {}'.format(filename,
             self.assignments[int(hw_number)-1]))
         url = self.submission_url.format(hw_number)
@@ -265,11 +269,11 @@ class Diderot:
         if r.status_code != 200:
             print('Error retreiving submission page, aborting submission!')
             return False
-        
+
         headers = {'X-CSRFToken':self.csrftoken}
-        
+
         response = self.client.post(url, headers=headers, files={'submission':open(filename, 'rb')})
-        
+
         if response.status_code == 200:
             print('Submission appears successful. You still may want to check that diderot'
             ' accepted your submission (and whether it compiles) in your browser.\nI think the'
