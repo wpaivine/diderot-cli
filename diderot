@@ -6,6 +6,8 @@ of this script!
 '''
 import sys
 import getpass
+import shutil
+import os.path
 import importlib
 
 requests_spec = importlib.util.find_spec('requests')
@@ -42,7 +44,9 @@ HELP = {'help': 'displays this help message',
         'quit': 'quits the cli',
         'logout': 'logs out of Diderot',
         'status': 'displays the current status',
-        'refresh': 'refreshes internal assignment list'}
+        'refresh': 'refreshes internal assignment list',
+        'download <#>': 'downloads the handout for assignment number #'}
+
 def build_help_msg(d):
     length = max([len(k) for k in d]) + 4
     msg = ''
@@ -52,11 +56,25 @@ def build_help_msg(d):
 
 HELP_TEXT = build_help_msg(HELP)
 
-submission_url = 'https://www.diderot.one/code-homeworks/view-code-homework/?hw_pk=5'
-
 C15210 = 2
 C15251 = 3
 C15859B = 4
+
+def download_file(url):
+    local_filename = url.split('/')[-1]
+    if os.path.isfile(local_filename):
+        print('There is already a file called {}, so I won\'t download a new one.'
+              ' Rename the old one and please try again'.format(local_filename))
+        return False
+
+    print('Trying to download file to {}'.format(local_filename))
+
+    r = requests.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        shutil.copyfileobj(r.raw, f)
+
+    return local_filename
+
 class Diderot:
     def __init__(self,
                  class_code=None,
@@ -136,17 +154,43 @@ class Diderot:
                         print('Not currently logged in')
                 else:
                     print('No connection to Diderot.')
+            elif cmd.startswith('download'):
+                args = cmd.split(' ')
+                if len(args) < 2:
+                    print('Incorrectly formatted `download` command.')
+                else:
+                    hw_number = args[1]
+                    self.download(hw_number)
             elif cmd == '':
                 pass
             else:
                 print('Unrecognized command "{}". Try "help"'.format(cmd))
 
+    def download(self, hw_number):
+        if not self.check_logged_in():
+            return False
+        url = self.submission_url.format(hw_number)
+        r = self.client.get(url)
+        if r.status_code != 200:
+            print('Error retreiving submission page, aborting download.')
+            return False
+
+        download_url = r.text.split('Download Handout')[0].split('<a href')[-1].split('"')[1]
+        # super gross html parsing, don't actually do stuff like this (this is bad code!)
+        if download_file(download_url):
+            print('Download successful!')
+        else:
+            print('Download unsuccessful.')
+
+
+
     def check_logged_in(self):
+        cmd = self.cmd.split(' ')[0]
         if not self.connected:
-            print('Cannot {} if not connected.'.format(self.cmd))
+            print('Cannot {} if not connected.'.format(cmd))
             return False
         if not self.logged_in:
-            print('Cannot {} if not logged in.'.format(self.cmd))
+            print('Cannot {} if not logged in.'.format(cmd))
             return False
         return True
 
