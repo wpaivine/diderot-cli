@@ -37,7 +37,7 @@ WARNING = bcolors.WARNING + '=' + bcolors.ENDC
 RED_MINUS = bcolors.FAIL + 'X' + bcolors.ENDC
 
 HELP = {'help': 'displays this help message',
-        'login': 'connects to Diderot and logs in',
+        'login (<email>)': 'connects to Diderot and logs in. Uses andrew email by default.',
         'ls': 'lists detected assignments',
         'submit <#> (filename)': 'submits file `filename` to homework # (given by ls). If'
                                  'filename is supplied as a command line argument, `filename` may be omitted',
@@ -121,8 +121,13 @@ class Diderot:
             self.cmd = cmd
             if cmd == 'q' or cmd == 'quit':
                 self.running = False
-            elif cmd == 'login':
-                self.login()
+            elif cmd.startswith('login'):
+                args = cmd.split(' ')
+                if len(args) < 2:
+                    self.login(prompt_email=False)
+                else:
+                    email = args[1]
+                    self.login(prompt_email=False, email=email)
                 self.fetch_assignments()
             elif cmd == 'help' or cmd == 'h':
                 print(HELP_TEXT)
@@ -229,10 +234,14 @@ class Diderot:
         self.logged_in = False
         print('Successfully logged out of Diderot.')
         return True
-    def login(self):
+    def login(self, prompt_email=False, email=None):
         if sys.stdin.isatty():
             print('Please enter your diderot.one login credentials (blank to abort).')
-            email = str(input('Email: '))
+            if prompt_email:
+                email = str(input('Email: '))
+            elif email is None:
+                email = '{}@andrew.cmu.edu'.format(getpass.getuser())
+                print('Email: {}'.format(email))
             self.user = email
             password = getpass.getpass()
         else:
