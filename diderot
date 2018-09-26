@@ -3,12 +3,17 @@
 USE AT YOUR OWN RISK (This is completely unofficial and the consequences of bugs are unknown. I
 assume no responsibility for late assignments, corrupted files, or anything that comes as a result
 of this script!
+
+William Paivine
+bill@paivine.com
 '''
 import sys
+assert sys.version_info >= (3,6), 'Python3.6 is required'
 import getpass
 import shutil
 import os.path
 import importlib
+
 
 requests_spec = importlib.util.find_spec('requests')
 if requests_spec is None:
