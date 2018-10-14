@@ -210,7 +210,7 @@ class Diderot:
         hw_number = 1
         self.assignments = []
         found_homework = True
-        while found_homework:
+        while found_homework or hw_number < 10:
             response = self.client.get(self.assignment_url.format(hw_number))
             if response.status_code == 200:
                 hw_name = response.text.split('codehomework-breadcrumb')[1].split('</h3')[0].split('>')[-1]
@@ -222,13 +222,14 @@ class Diderot:
                 # don't ever do anything like this for anything that is real or matters!
                 # In all seriousness, though, these lines above are the most likely thing to break,
                 # since they actually "parse" response html... sorry for hurting your eyes :'(
-                self.assignments.append('{} ({})'.format(hw_name, due_date))
-                hw_number += 1
+                self.assignments.append((hw_number, '{} ({})'.format(hw_name, due_date)))
+                found_homework = True
             else:
                 found_homework = False
+            hw_number += 1
 
     def list_assignments(self):
-        for i, name in enumerate(self.assignments):
+        for i, name in self.assignments:
             print('[{}] : {}'.format(i+1, name))
 
 
