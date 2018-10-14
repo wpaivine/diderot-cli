@@ -230,7 +230,7 @@ class Diderot:
 
     def list_assignments(self):
         for i, name in self.assignments:
-            print('[{}] : {}'.format(i+1, name))
+            print('[{}] : {}'.format(i, name))
 
 
     def logout(self):
