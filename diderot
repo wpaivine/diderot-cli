@@ -102,7 +102,7 @@ class Diderot:
         self.submission_url = submission_url
         self.connected = False
         self.logged_in = False
-        self.assignments = []
+        self.assignments = {}
         if sys.stdin.isatty():
             self.repl()
         else:
@@ -208,7 +208,7 @@ class Diderot:
         if not self.check_logged_in():
             return False
         hw_number = 1
-        self.assignments = []
+        self.assignments = {}
         found_homework = True
         while found_homework or hw_number < 10:
             response = self.client.get(self.assignment_url.format(hw_number))
@@ -222,14 +222,14 @@ class Diderot:
                 # don't ever do anything like this for anything that is real or matters!
                 # In all seriousness, though, these lines above are the most likely thing to break,
                 # since they actually "parse" response html... sorry for hurting your eyes :'(
-                self.assignments.append((hw_number, '{} ({})'.format(hw_name, due_date)))
+                self.assignments[hw_number] = '{} ({})'.format(hw_name, due_date)
                 found_homework = True
             else:
                 found_homework = False
             hw_number += 1
 
     def list_assignments(self):
-        for i, name in self.assignments:
+        for i, name in self.assignments.items():
             print('[{}] : {}'.format(i, name))
 
 
@@ -309,10 +309,10 @@ class Diderot:
     def submit(self, hw_number, filename):
         if not self.check_logged_in():
             return False
-        if int(hw_number) < 1 or int(hw_number) > len(self.assignments):
+        if not int(hw_number) in self.assignments:
             print('Invalid homework number {}'.format(hw_number))
             return False
-        if int(hw_number) != len(self.assignments):
+        if int(hw_number) != max(self.assignments.keys()):
             if str(input('It seems that homework {} is not the most recent assignment.\n'
                          'Submit to it anyway, though this could result in late penalties? (type'
                          ' "yes" to continue, no to abort):\n'.format(hw_number))) != 'yes':
@@ -322,7 +322,7 @@ class Diderot:
                 print('Submission continued.')
 
         print('Submitting {} to assignment: {}'.format(filename,
-            self.assignments[int(hw_number)-1]))
+            self.assignments[int(hw_number)]))
         url = self.submission_url.format(hw_number)
         r = self.client.get(url)
         if r.status_code != 200:
