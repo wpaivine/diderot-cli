@@ -120,9 +120,12 @@ class Diderot:
                 status = RED_MINUS
             try:
                 cmd = str(input('Diderot ({}) > '.format(status))).lower()
-            except (EOFError, KeyboardInterrupt):
+            except EOFError:
                 print()
                 exit()
+            except KeyboardInterrupt:
+                print()
+                continue
             self.cmd = cmd
             if cmd == 'q' or cmd == 'quit':
                 self.running = False
